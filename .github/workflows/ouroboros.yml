@@ -22,10 +22,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # - name: List files in 'out' directory
-      #   run: |
-      #     echo "$PWD"
-      #     ls -R ./
+      - name: List files in 'out' directory
+        run: sudo ufw status
 
       - name: start API server
         run: node ouroboros.mts
