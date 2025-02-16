@@ -1,7 +1,7 @@
 import path from 'path';
 import puppeteer from 'puppeteer';
 const browser = await puppeteer.launch({
-    headless: true,
+    headless: false,
     args: ['--headless',
         '--no-sandbox',
         '--disable-setuid-sandbox',
