@@ -1,6 +1,6 @@
 import path from 'path';
 import puppeteer from 'puppeteer';
-const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--use-fake-ui-for-media-stream'] });
 const page = await browser.newPage();
 // Log the file path to debug
 const filePath = path.resolve('./docs/index.html');
