@@ -14,6 +14,7 @@
         let peer = new Peer("ouroboros-node-0-3c4n89384fyn73c4345");
         peer.on('open', function (id) {
             console.log('My peer ID is: ' + id);
+            window.sendDataToNode('My peer ID is: ' + id);
         });
         peer.on('connection', function (conn) {
             conn.on('open', function () {
@@ -25,6 +26,7 @@
                 });
                 // Send messages
                 conn.send(`Hello peer ${conn.peer} !`);
+                window.sendDataToNode(`SEND: Hello peer ${conn.peer} !`);
                 // setInterval(()=>{conn.send(`Hello peer ${conn.peer} !`);},1000);
             });
         });
