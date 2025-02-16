@@ -23,7 +23,9 @@ jobs:
         run: npm ci
 
       - name: List files in 'out' directory
-        run: ls -R ./out
+        run: |
+          echo "$PWD"
+          ls -R ./
 
       - name: start API server
         run: node ouroboros.mts
