@@ -3,6 +3,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",
     "@types/peerjs": "^0.0.30",
+    "axios": "^1.7.9",
     "express": "^4.21.2",
     "peerjs": "^1.5.4",
     "puppeteer": "^24.2.1",
