@@ -20,9 +20,9 @@
             conn.on('open', function () {
                 // Receive messages
                 conn.on('data', function (data) {
-                    console.log('Received', data);
-                    window.sendDataToNode(data);
-                    // log this to puppeteer console
+                    // console.log('Received', data);
+                    window.sendDataToNode(data); // log this to puppeteer console
+
                 });
                 // Send messages
                 conn.send(`Hello peer ${conn.peer} !`);

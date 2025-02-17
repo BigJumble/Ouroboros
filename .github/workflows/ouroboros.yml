@@ -22,19 +22,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: List files in 'out' directory
-        run: |
-          sudo ufw allow 3000/tcp &
-          sudo ufw allow 3000/udp 
+      # - name: List files in 'out' directory
+      #   run: |
+      #     sudo ufw allow 3000/tcp &
+      #     sudo ufw allow 3000/udp 
 
       - name: start API server
-        run: |
-          node ouroboros.mts &
-          node server.mts
+        run: node --disable-warning=ExperimentalWarning ./server/ouroboros.mts 
 
 
-      - name: RUN API SERVER FOR 1H
-        run: sleep 3600
+      # - name: RUN API SERVER FOR 1H
+      #   run: sleep 3600
 
     #   - name: Run this Action again
     #     run: |
