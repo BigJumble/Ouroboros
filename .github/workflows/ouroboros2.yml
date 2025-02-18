@@ -21,10 +21,12 @@ jobs:
         run: npm run setup
 
       - name: start API server
-        run: HEADLESS=true NODEID=1 npm run serve2
+        run: HEADLESS=true NODEID=1 npm run serve
 
-
-      - name: RUN API SERVER FOR 5H
+  concurrent_tasks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: RUN API SERVER FOR 5H, 3min for test
         run: sleep 180
 
       - name: Run this Action again
