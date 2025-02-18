@@ -3,6 +3,9 @@ export class Database {
     static store(message) {
         this.messages.push({ ...message, date: new Date().getTime() });
     }
+    static restore(data) {
+        this.messages = [...data, ...this.messages];
+    }
     static getLatest() {
         return JSON.stringify(this.messages[this.messages.length - 1]);
     }

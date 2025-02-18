@@ -12,6 +12,10 @@ import chalk from 'chalk';
 //         MyConnections: typeof MyConnections;
 //     }
 // }
+// FOR TS
+class MyConnections{
+    static init(nodeID:number){};
+}
 
 const main = async ()=>{
 
@@ -38,6 +42,15 @@ await page.goto(`file://${filePath}`);
 await page.exposeFunction('logToTerminal', logToTerminal);
 async function logToTerminal(text:string) {
     console.log(text);
+}
+
+try {
+    await page.evaluate((id) => {
+        MyConnections.init(Number(id));
+    },!!process.env.NODEID?process.env.NODEID:0);
+} catch(error)
+{
+    console.log(error);
 }
 
 // await page.exposeFunction('sendDataToNode', receivedDataFromUser);

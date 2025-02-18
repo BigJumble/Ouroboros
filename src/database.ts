@@ -6,6 +6,10 @@ export class Database{
     {
         this.messages.push({...message, date:new Date().getTime()});
     }
+    static restore(data:MetaMessage[])
+    {
+        this.messages = [...data,...this.messages];
+    }
     static getLatest()
     {
         return JSON.stringify(this.messages[this.messages.length-1]);

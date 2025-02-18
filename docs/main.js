@@ -5,18 +5,37 @@ export class MyConnections {
     // MAKE SURE NOTHING IS EVALUATED ON LOAD, SINCE THIS CLASS IS USED IN SERVER FOR TYPE CHECKING
     static peer;
     static clientPeers = {};
-    static init() {
-        this.peer = new Peer("ouroboros-node-0-3c4n89384fyn73c4345");
+    static heartBeatID;
+    static dyingNodeConn;
+    static nodeId;
+    static init(nodeId) {
+        this.nodeId = nodeId;
+        this.peer = new Peer(`ouroboros-node-${nodeId}-3c4n89384fyn73c4345`);
         this.peer.on('open', function (id) {
-            console.log('My peer ID is: ' + id);
+            window.logToTerminal(`OPENED: ${id}`);
         });
-        this.peer.on('connection', this.handleConnection.bind(this));
+        this.getDataFromDyingNode(nodeId);
+        this.peer.on('connection', (conn) => this.handleConnection(conn));
         setInterval(() => this.heartBeat(), 15000);
+    }
+    static getDataFromDyingNode(nodeId) {
+        window.logToTerminal("GETTING DATA FROM DYING NODE");
+        this.dyingNodeConn = this.peer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
+        this.dyingNodeConn.on('open', () => {
+            this.dyingNodeConn.on('data', (data) => {
+                Database.store(JSON.parse(data));
+                this.dyingNodeConn.close();
+            });
+        });
     }
     static handleConnection(conn) {
         conn.on('open', () => this.handleOpen(conn));
     }
     static handleOpen(conn) {
+        if (conn.peer === `ouroboros-node-${(this.nodeId + 1) % 2}-3c4n89384fyn73c4345`) {
+            this.handleDying(conn);
+            return;
+        }
         this.clientPeers[conn.peer] = { conn, isAlive: true };
         conn.on('data', (data) => this.handleData(conn.peer, data));
     }
@@ -43,6 +62,16 @@ export class MyConnections {
             window.logToTerminal(parsed.error);
         }
         // window.sendDataToNode(peerId, data);
+    }
+    static handleDying(conn) {
+        window.logToTerminal("I'M DYING! SENDING ALL DATA TO NEW NODE!");
+        window.logToTerminal("DISCONNECTING ALL USERS!");
+        for (const cli in this.clientPeers) {
+            this.clientPeers[cli].conn.send("switch-node");
+            this.clientPeers[cli].conn.close();
+            window.logToTerminal(`DISCONNECTED ${cli}`);
+        }
+        conn.send(JSON.stringify(Database.messages));
     }
     static heartBeat() {
         for (const cli in this.clientPeers) {

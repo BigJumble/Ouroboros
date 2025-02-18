@@ -10,4 +10,4 @@ declare global {
 window.Database = Database;
 window.MyConnections = MyConnections;
 
-MyConnections.init();
+// MyConnections.init(0);
