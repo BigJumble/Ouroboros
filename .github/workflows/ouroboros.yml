@@ -28,7 +28,7 @@ jobs:
       #     sudo ufw allow 3000/udp 
 
       - name: start API server
-        run: HEADLESS=true node --disable-warning=ExperimentalWarning ./server/ouroboros.mts 
+        run: HEADLESS=true npm run serve
 
 
       # - name: RUN API SERVER FOR 1H

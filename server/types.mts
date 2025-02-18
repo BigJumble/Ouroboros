@@ -7,11 +7,11 @@ export interface ValidationResult<T> {
 export interface Message {
     userName: string;
     message: string;
-    date: Date;
+    date: number;
 }
 
 export const MessageExample: Message = {
     userName: "",
     message: "",
-    date: new Date()
+    date: 0
 }

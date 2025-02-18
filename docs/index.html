@@ -1,37 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-   
 
+<head>
+    <script defer src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" ></script>
+    <script defer src="./index.js" type="module"></script>
 </head>
 <body>
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" ></script>
-    <script>
-        "use strict";
-        let peer = new Peer("ouroboros-node-0-3c4n89384fyn73c4345");
-        peer.on('open', function (id) {
-            console.log('My peer ID is: ' + id);
-            window.sendDataToNode('My peer ID is: ' + id);
-        });
-        peer.on('connection', function (conn) {
-            conn.on('open', function () {
-                // Receive messages
-                conn.on('data', function (data) {
-                    // console.log('Received', data);
-                    window.sendDataToNode(data); // log this to puppeteer console
-
-                });
-                // Send messages
-                conn.send(`Hello peer ${conn.peer} !`);
-                window.sendDataToNode(`SEND: Hello peer ${conn.peer} !`);
-                // setInterval(()=>{conn.send(`Hello peer ${conn.peer} !`);},1000);
-            });
-        });
-
-
-    </script>
+    
 </body>
 </html>
