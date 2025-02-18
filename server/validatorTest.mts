@@ -1,4 +1,4 @@
-import { validateJSON } from './validator.mts';
+import { validateJSON } from '../src/validator.mts';
 interface User {
     name: string;
     age: number;
