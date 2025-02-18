@@ -6,7 +6,7 @@ import { type Message, MessageExample } from './types.mts';
 import chalk from 'chalk';
 
 const browser = await puppeteer.launch({
-    headless: false,
+    headless: !!process.env.HEADLESS?true:false,
     browser:"firefox",
     args: [
         '--no-sandbox',
