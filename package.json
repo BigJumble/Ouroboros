@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "setupRunner":"PUPPETEER_PRODUCT=firefox npm ci",
+    "setup": "npm ci && npx puppeteer browsers install firefox -y",
+    "serve": "node ./server/ouroboros.mts"
+  },
   "dependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",

@@ -20,7 +20,7 @@ jobs:
           cache: npm
       
       - name: Install dependencies
-        run: npm ci
+        run: npm run setupUbuntu
 
       # - name: List files in 'out' directory
       #   run: |
