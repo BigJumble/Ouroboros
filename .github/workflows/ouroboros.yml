@@ -23,8 +23,7 @@ jobs:
         run: npm run setup
 
       - name: start API server
-        run: |
-          HEADLESS=true NODEID=0 nohup npm run serve
+        run: HEADLESS=true NODEID=0 nohup npm run serve2
 
 
       - name: RUN API SERVER FOR 5H, 3min for test

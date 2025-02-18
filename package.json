@@ -2,7 +2,8 @@
   "type": "module",
   "scripts": {
     "setup": "npm ci && npx puppeteer browsers install firefox -y",
-    "serve": "tsc && node --disable-warning=ExperimentalWarning ./server/ouroboros.mts"
+    "serve": "tsc && node --disable-warning=ExperimentalWarning ./server/ouroboros.mts",
+    "serve2":"tsc && nohup node --disable-warning=ExperimentalWarning ./server/ouroboros.mts"
   },
   "dependencies": {
     "@types/express": "^5.0.0",

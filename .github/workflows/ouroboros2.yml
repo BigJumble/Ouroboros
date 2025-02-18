@@ -21,13 +21,11 @@ jobs:
         run: npm run setup
 
       - name: start API server
-        run: |
-          HEADLESS=true NODEID=1 npm run serve &&
-          echo you like jazz?
+        run: HEADLESS=true NODEID=1 npm run serve2
 
 
       - name: RUN API SERVER FOR 5H
-        run: sleep 18000
+        run: sleep 180
 
       - name: Run this Action again
         run: |

@@ -19,9 +19,9 @@ export class MyConnections {
         setInterval(() => this.heartBeat(), 15000);
     }
     static getDataFromDyingNode(nodeId) {
-        window.logToTerminal("GETTING DATA FROM DYING NODE");
         this.dyingNodeConn = this.peer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
         this.dyingNodeConn.on('open', () => {
+            window.logToTerminal("GETTING DATA FROM DYING NODE");
             this.dyingNodeConn.on('data', (data) => {
                 Database.store(JSON.parse(data));
                 this.dyingNodeConn.close();
