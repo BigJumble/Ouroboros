@@ -63,7 +63,7 @@ async function receivedDataFromUser(peerid:string, data:string) {
         console.log(chalk.yellow(parsed.error));
         return;
     }
-    console.log(chalk.green(parsed.data));
+    // console.log(chalk.green(parsed.data));
 
     try {
         await page.evaluate((peerid) => {
