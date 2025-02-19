@@ -36,10 +36,37 @@ export class MyConnections {
         });
 
 
+        this.peer.on("disconnected",()=>{ 
+            this.peer.reconnect();
+        });
+        
+        this.peer.on("error", (err)=>{
+            window.logToTerminal(`ERROR ${err}, CLEANING UP!`);
+
+            if(!`${err}`.includes("is taken"))
+                this.cleanup(); 
+            else
+                window.logToTerminal(`ALL IS LOST AND THERE IS NO HOPE! jk`);
+        })
 
         this.peer.on('connection', (conn: PeerJs.DataConnection) => this.handleConnection(conn));
         setInterval(() => this.heartBeat(), 15000);
     }
+
+    static cleanup()
+    {
+        for (const peerId in this.clientPeers) {
+            this.clientPeers[peerId].conn.close();
+            delete this.clientPeers[peerId];
+        }
+        if (this.dyingNodeConn) {
+            this.dyingNodeConn.close();
+        }
+        this.peer.destroy();
+        this.init(this.nodeId);
+    
+    }
+
     static getDataFromDyingNode(nodeId: number) {
         this.dyingNodeConn = this.peer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
         this.dyingNodeConn.on('open', () => {

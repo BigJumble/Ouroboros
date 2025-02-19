@@ -15,15 +15,36 @@ export class MyConnections {
             window.logToTerminal(`OPENED: ${id}`);
             this.getDataFromDyingNode(nodeId);
         });
+        this.peer.on("disconnected", () => {
+            this.peer.reconnect();
+        });
+        this.peer.on("error", (err) => {
+            window.logToTerminal(`ERROR ${err}, CLEANING UP!`);
+            if (!`${err}`.includes("is taken"))
+                this.cleanup();
+            else
+                window.logToTerminal(`ALL IS LOST AND THERE IS NO HOPE!`);
+        });
         this.peer.on('connection', (conn) => this.handleConnection(conn));
         setInterval(() => this.heartBeat(), 15000);
+    }
+    static cleanup() {
+        for (const peerId in this.clientPeers) {
+            this.clientPeers[peerId].conn.close();
+            delete this.clientPeers[peerId];
+        }
+        if (this.dyingNodeConn) {
+            this.dyingNodeConn.close();
+        }
+        this.peer.destroy();
+        this.init(this.nodeId);
     }
     static getDataFromDyingNode(nodeId) {
         this.dyingNodeConn = this.peer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
         this.dyingNodeConn.on('open', () => {
             window.logToTerminal("GETTING DATA FROM A DYING NODE!");
             this.dyingNodeConn.on('data', (data) => {
-                Database.store(JSON.parse(data));
+                Database.restore(JSON.parse(data));
                 this.dyingNodeConn.close();
             });
         });
@@ -75,6 +96,7 @@ export class MyConnections {
             window.logToTerminal(`DISCONNECTED ${cli}`);
         }
         conn.send(JSON.stringify(Database.messages));
+        window.logToTerminal("DATA SENT! SHUTTING DOWN!");
         window.killmyself();
     }
     static heartBeat() {
