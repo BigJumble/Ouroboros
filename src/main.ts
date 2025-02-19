@@ -48,6 +48,8 @@ export class MyConnections {
                 this.dyingNodeConn.close();
             })
         })
+        this.dyingNodeConn.on('error',(data)=>{window.logToTerminal(data)})
+        this.dyingNodeConn.on('close',()=>{window.logToTerminal("CLOSED")})
     }
 
     static handleConnection(conn: PeerJs.DataConnection) {
@@ -55,6 +57,7 @@ export class MyConnections {
     }
 
     static handleOpen(conn: PeerJs.DataConnection) {
+        window.logToTerminal(conn.peer);
         if (conn.peer === `ouroboros-node-${(this.nodeId + 1) % 2}-3c4n89384fyn73c4345`) {
             this.handleDying(conn);
             return;
