@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: RUN API SERVER FOR 5H, 3min for test
-        run: sleep 100
+        run: sleep 18000
 
       - name: Run this Action again
         run: |
