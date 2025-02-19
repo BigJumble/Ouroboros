@@ -6,7 +6,7 @@ declare global {
     interface Window {
         sendDataToNode: (peerid: string, data: string) => void;
         logToTerminal: (text: string) => void;
-        killmyself:()=>void;
+        killmyself: () => void;
     }
 }
 interface Clinet {
@@ -36,25 +36,27 @@ export class MyConnections {
         });
 
 
-        this.peer.on("disconnected",()=>{ 
+        this.peer.on("disconnected", () => {
             this.peer.reconnect();
         });
-        
-        this.peer.on("error", (err)=>{
-            window.logToTerminal(`ERROR ${err}, CLEANING UP!`);
 
-            if(!`${err}`.includes("is taken"))
-                this.cleanup(); 
-            else
+        this.peer.on("error", (err) => {
+            if (`${err}`.includes("ouroboros-node")) return;
+
+            if (!`${err}`.includes("is taken")) {
+                window.logToTerminal(`${err}, CLEANING UP!`);
+                this.cleanup();
+            }
+            else {
                 window.logToTerminal(`ALL IS LOST AND THERE IS NO HOPE! jk`);
+            }
         })
 
         this.peer.on('connection', (conn: PeerJs.DataConnection) => this.handleConnection(conn));
         setInterval(() => this.heartBeat(), 15000);
     }
 
-    static cleanup()
-    {
+    static cleanup() {
         for (const peerId in this.clientPeers) {
             this.clientPeers[peerId].conn.close();
             delete this.clientPeers[peerId];
@@ -64,7 +66,7 @@ export class MyConnections {
         }
         this.peer.destroy();
         this.init(this.nodeId);
-    
+
     }
 
     static getDataFromDyingNode(nodeId: number) {
@@ -78,8 +80,8 @@ export class MyConnections {
 
             })
         })
-        this.dyingNodeConn.on('error',(data)=>{window.logToTerminal(data)})
-        this.dyingNodeConn.on('close',()=>{window.logToTerminal("I GOT DATA! DYING NODE CLOSED.")})
+        this.dyingNodeConn.on('error', (data) => { window.logToTerminal(data) })
+        this.dyingNodeConn.on('close', () => { window.logToTerminal("I GOT DATA! DYING NODE CLOSED.") })
     }
 
     static handleConnection(conn: PeerJs.DataConnection) {
