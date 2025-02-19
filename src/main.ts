@@ -6,6 +6,7 @@ declare global {
     interface Window {
         sendDataToNode: (peerid: string, data: string) => void;
         logToTerminal: (text: string) => void;
+        killmyself:()=>void;
     }
 }
 interface Clinet {
@@ -29,11 +30,12 @@ export class MyConnections {
     static init(nodeId: number) {
         this.nodeId = nodeId;
         this.peer = new Peer(`ouroboros-node-${nodeId}-3c4n89384fyn73c4345`);
-        this.peer.on('open', function (id) {
+        this.peer.on('open', (id) => {
             window.logToTerminal(`OPENED: ${id}`);
+            this.getDataFromDyingNode(nodeId);
         });
 
-        this.getDataFromDyingNode(nodeId);
+
 
         this.peer.on('connection', (conn: PeerJs.DataConnection) => this.handleConnection(conn));
         setInterval(() => this.heartBeat(), 15000);
@@ -41,15 +43,16 @@ export class MyConnections {
     static getDataFromDyingNode(nodeId: number) {
         this.dyingNodeConn = this.peer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
         this.dyingNodeConn.on('open', () => {
-            window.logToTerminal("GETTING DATA FROM DYING NODE");
+            window.logToTerminal("GETTING DATA FROM A DYING NODE!");
 
             this.dyingNodeConn.on('data', (data) => {
                 Database.store(JSON.parse(data));
                 this.dyingNodeConn.close();
+
             })
         })
         this.dyingNodeConn.on('error',(data)=>{window.logToTerminal(data)})
-        this.dyingNodeConn.on('close',()=>{window.logToTerminal("CLOSED")})
+        this.dyingNodeConn.on('close',()=>{window.logToTerminal("I GOT DATA! DYING NODE CLOSED.")})
     }
 
     static handleConnection(conn: PeerJs.DataConnection) {
@@ -96,12 +99,14 @@ export class MyConnections {
         window.logToTerminal("DISCONNECTING ALL USERS!");
 
         for (const cli in this.clientPeers) {
-            this.clientPeers[cli].conn.send("switch-node");
+            // this.clientPeers[cli].conn.send("switch-node");
             this.clientPeers[cli].conn.close();
             window.logToTerminal(`DISCONNECTED ${cli}`);
         }
 
         conn.send(JSON.stringify(Database.messages));
+        window.logToTerminal("DATA SENT! SHUTTING DOWN!");
+        window.killmyself();
     }
 
 

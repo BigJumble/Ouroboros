@@ -43,6 +43,12 @@ await page.exposeFunction('logToTerminal', logToTerminal);
 async function logToTerminal(text:string) {
     console.log(text);
 }
+await page.exposeFunction('killmyself', killmyself);
+async function killmyself() {
+    await page.close();
+    await browser.close();
+    process.exit(0);
+}
 
 try {
     await page.evaluate((id) => {

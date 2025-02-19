@@ -11,27 +11,30 @@ export class MyConnections {
     static init(nodeId) {
         this.nodeId = nodeId;
         this.peer = new Peer(`ouroboros-node-${nodeId}-3c4n89384fyn73c4345`);
-        this.peer.on('open', function (id) {
+        this.peer.on('open', (id) => {
             window.logToTerminal(`OPENED: ${id}`);
+            this.getDataFromDyingNode(nodeId);
         });
-        this.getDataFromDyingNode(nodeId);
         this.peer.on('connection', (conn) => this.handleConnection(conn));
         setInterval(() => this.heartBeat(), 15000);
     }
     static getDataFromDyingNode(nodeId) {
         this.dyingNodeConn = this.peer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
         this.dyingNodeConn.on('open', () => {
-            window.logToTerminal("GETTING DATA FROM DYING NODE");
+            window.logToTerminal("GETTING DATA FROM A DYING NODE!");
             this.dyingNodeConn.on('data', (data) => {
                 Database.store(JSON.parse(data));
                 this.dyingNodeConn.close();
             });
         });
+        this.dyingNodeConn.on('error', (data) => { window.logToTerminal(data); });
+        this.dyingNodeConn.on('close', () => { window.logToTerminal("I GOT DATA! DYING NODE CLOSED."); });
     }
     static handleConnection(conn) {
         conn.on('open', () => this.handleOpen(conn));
     }
     static handleOpen(conn) {
+        window.logToTerminal(conn.peer);
         if (conn.peer === `ouroboros-node-${(this.nodeId + 1) % 2}-3c4n89384fyn73c4345`) {
             this.handleDying(conn);
             return;
@@ -67,11 +70,12 @@ export class MyConnections {
         window.logToTerminal("I'M DYING! SENDING ALL DATA TO NEW NODE!");
         window.logToTerminal("DISCONNECTING ALL USERS!");
         for (const cli in this.clientPeers) {
-            this.clientPeers[cli].conn.send("switch-node");
+            // this.clientPeers[cli].conn.send("switch-node");
             this.clientPeers[cli].conn.close();
             window.logToTerminal(`DISCONNECTED ${cli}`);
         }
         conn.send(JSON.stringify(Database.messages));
+        window.killmyself();
     }
     static heartBeat() {
         for (const cli in this.clientPeers) {
