@@ -46,7 +46,7 @@ export class MyConnections {
             window.logToTerminal("GETTING DATA FROM A DYING NODE!");
 
             this.dyingNodeConn.on('data', (data) => {
-                Database.store(JSON.parse(data));
+                Database.restore(JSON.parse(data));
                 this.dyingNodeConn.close();
 
             })
