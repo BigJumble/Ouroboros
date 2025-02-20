@@ -12,6 +12,7 @@ export class MyConnections {
     static init() {
         this.nodes = {};
         // this.oldNodes = {};
+        this.clientPeers = {};
         this.serverPeer = new Peer({
             config: {
                 'iceServers': [
@@ -31,7 +32,7 @@ export class MyConnections {
         this.serverPeer.on('open', (id) => this.handleServerOpen(id));
         this.serverPeer.on("error", (err) => this.handleServerError(err));
     }
-    static async getNodes() {
+    static async getServerNodes() {
         try {
             window.logToTerminal(`Retrieved server nodes data from GitHub Pages`);
             const response = await fetch('https://bigjumble.github.io/Ouroboros/nodes.json');
@@ -44,6 +45,7 @@ export class MyConnections {
             this.nodes[latestNodeKey] = latestNode; // add the dying node to the new nodes
             window.logToTerminal(`Old Nodes: ${JSON.stringify(nodes)}`);
             window.logToTerminal(`New Nodes: ${JSON.stringify(this.nodes)}`);
+            // output nodes to github pages
             window.startPages(JSON.stringify(this.nodes));
         }
         catch (error) {
@@ -51,10 +53,11 @@ export class MyConnections {
             window.logToTerminal(`Failed to get node data: ${error}`);
         }
     }
+    // HANDLE THIS SERVER CONNECTION ====================
     static handleServerOpen(id) {
-        window.logToTerminal(`Connected to Signaling Server.`);
+        window.logToTerminal(`Connected to Signaling Server: ${id}`);
         window.logToTerminal(`Fetching old node data from GitHub Pages...`);
-        this.getNodes();
+        this.getServerNodes();
         this.serverPeer.on('connection', (conn) => this.handleConnection(conn));
         this.serverPeer.on("disconnected", () => this.handleServerDisconnect());
         // setInterval(() => this.heartBeat(), 15000);
@@ -73,7 +76,7 @@ export class MyConnections {
         //     this.cleanup();
         // }
         // else {
-        //     window.logToTerminal(`ALL IS LOST AND THERE IS NO HOPE! jk`);
+        //     window.logToTerminal(`ALL IS LOST AND THERE IS NO HOPE!`);
         // }
     }
     static cleanup() {
@@ -87,23 +90,12 @@ export class MyConnections {
         this.serverPeer.destroy();
         this.init();
     }
-    // static getDataFromDyingNode() {
-    //     this.dyingNodeConn = this.serverPeer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
-    //     this.dyingNodeConn.on('open', () => {
-    //         window.logToTerminal("GETTING DATA FROM A DYING NODE!");
-    //         this.dyingNodeConn.on('data', (data) => {
-    //             Database.restore(JSON.parse(data));
-    //             this.dyingNodeConn.close();
-    //         })
-    //     })
-    //     this.dyingNodeConn.on('error', (data) => { window.logToTerminal(data) })
-    //     this.dyingNodeConn.on('close', () => { window.logToTerminal("I GOT DATA! DYING NODE CLOSED.") })
-    // }
+    // HANDLE CLIENT NODE CONNECTIONS ====================
     static handleConnection(conn) {
         conn.on('open', () => this.handleOpen(conn));
     }
     static handleOpen(conn) {
-        window.logToTerminal(conn.peer);
+        window.logToTerminal(`Connected: ${conn.peer}`);
         // if (conn.peer === `ouroboros-node-${(this.nodeId + 1) % 2}-3c4n89384fyn73c4345`) {
         //     this.handleDying(conn);
         //     return;
@@ -133,8 +125,8 @@ export class MyConnections {
         else {
             window.logToTerminal(parsed.error);
         }
-        // window.sendDataToNode(peerId, data);
     }
+    // HANDLE SERVER NODE CONNECTIONS ====================
     static handleDying(conn) {
         window.logToTerminal("I'M DYING! SENDING ALL DATA TO NEW NODE!");
         window.logToTerminal("DISCONNECTING ALL USERS!");
@@ -147,6 +139,19 @@ export class MyConnections {
         window.logToTerminal("DATA SENT! SHUTTING DOWN!");
         window.killmyself();
     }
+    // static getDataFromDyingNode() {
+    //     this.dyingNodeConn = this.serverPeer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
+    //     this.dyingNodeConn.on('open', () => {
+    //         window.logToTerminal("GETTING DATA FROM A DYING NODE!");
+    //         this.dyingNodeConn.on('data', (data) => {
+    //             Database.restore(JSON.parse(data));
+    //             this.dyingNodeConn.close();
+    //         })
+    //     })
+    //     this.dyingNodeConn.on('error', (data) => { window.logToTerminal(data) })
+    //     this.dyingNodeConn.on('close', () => { window.logToTerminal("I GOT DATA! DYING NODE CLOSED.") })
+    // }
+    // HEART BEAT ====================
     static heartBeat() {
         for (const cli in this.clientPeers) {
             if (this.clientPeers[cli].isAlive === false) {
@@ -161,6 +166,7 @@ export class MyConnections {
             this.clientPeers[cli].conn.send("ping");
         }
     }
+    // SEND DATA TO CLIENT NODES ====================
     static send(peerid, message) {
         this.clientPeers[peerid].conn.send(message);
     }

@@ -33,6 +33,7 @@ export class MyConnections {
     static init() {
         this.nodes = {};
         // this.oldNodes = {};
+        this.clientPeers = {};
         this.serverPeer = new Peer({
             config: {
                 'iceServers': [
