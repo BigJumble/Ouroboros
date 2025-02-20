@@ -8,7 +8,14 @@ export class MyConnections {
     static heartBeatID;
     static dyingNodeConn;
     static nodes;
+    static currentNodeID;
+    static oldNodeID;
+    static oldNodeConn;
     // static oldNodes: ServerNodes;
+    static async getNodesData() {
+        const nodes = await window.getNodes();
+        return nodes;
+    }
     static init() {
         this.nodes = {};
         // this.oldNodes = {};
@@ -32,19 +39,20 @@ export class MyConnections {
         this.serverPeer.on('open', (id) => this.handleServerOpen(id));
         this.serverPeer.on("error", (err) => this.handleServerError(err));
     }
+    // HANDLE CURRENT SERVER CONNECTION ====================
     static async getServerNodes() {
         try {
+            const nodes = await this.getNodesData();
             window.logToTerminal(`Retrieved server nodes data from GitHub Pages`);
-            const response = await fetch('https://bigjumble.github.io/Ouroboros/nodes.json');
-            const data = await response.json();
-            const nodes = data;
-            this.nodes[new Date().getTime()] = this.serverPeer.id; // add the current node to the new nodes
             const nodeKeys = Object.keys(nodes).map(Number);
             const latestNodeKey = Number(Math.max(...nodeKeys));
             const latestNode = nodes[latestNodeKey];
             this.nodes[latestNodeKey] = latestNode; // add the dying node to the new nodes
-            window.logToTerminal(`Old Nodes: ${JSON.stringify(nodes)}`);
-            window.logToTerminal(`New Nodes: ${JSON.stringify(this.nodes)}`);
+            this.nodes[new Date().getTime()] = this.serverPeer.id; // add the current node to the new nodes
+            this.currentNodeID = this.serverPeer.id;
+            this.oldNodeID = latestNode;
+            // window.logToTerminal(`Old Nodes: ${JSON.stringify(nodes)}`);
+            // window.logToTerminal(`New Nodes: ${JSON.stringify(this.nodes)}`);
             // output nodes to github pages
             window.startPages(JSON.stringify(this.nodes));
         }
@@ -53,13 +61,15 @@ export class MyConnections {
             window.logToTerminal(`Failed to get node data: ${error}`);
         }
     }
-    // HANDLE THIS SERVER CONNECTION ====================
-    static handleServerOpen(id) {
-        window.logToTerminal(`Connected to Signaling Server: ${id}`);
-        window.logToTerminal(`Fetching old node data from GitHub Pages...`);
-        this.getServerNodes();
+    static async handleServerOpen(id) {
+        window.logToTerminal(`Connected to Signaling Server as: ${id}`);
         this.serverPeer.on('connection', (conn) => this.handleConnection(conn));
         this.serverPeer.on("disconnected", () => this.handleServerDisconnect());
+        window.logToTerminal(`Sending nodes data to GitHub Pages...`);
+        await this.getServerNodes();
+        setTimeout(() => {
+            this.handleOldServerConnection(this.oldNodeID);
+        }, 80000); // wait 1.2 minutes for Pages to update
         // setInterval(() => this.heartBeat(), 15000);
     }
     static handleServerDisconnect() {
@@ -90,82 +100,107 @@ export class MyConnections {
         this.serverPeer.destroy();
         this.init();
     }
-    // HANDLE CLIENT NODE CONNECTIONS ====================
+    // HANDLE CLIENT CONNECTIONS ====================
     static handleConnection(conn) {
         conn.on('open', () => this.handleOpen(conn));
+        conn.on('error', (err) => this.handleClientDisconnect(err, conn));
+        conn.on('close', () => this.handleClientDisconnect(null, conn));
     }
     static handleOpen(conn) {
-        window.logToTerminal(`Connected: ${conn.peer}`);
-        // if (conn.peer === `ouroboros-node-${(this.nodeId + 1) % 2}-3c4n89384fyn73c4345`) {
-        //     this.handleDying(conn);
-        //     return;
-        // }
+        window.logToTerminal(`User connected: ${conn.peer}`);
         this.clientPeers[conn.peer] = { conn, isAlive: true };
         conn.on('data', (data) => this.handleData(conn.peer, data));
     }
     static handleData(peerId, data) {
         if (data === "pong") {
             this.clientPeers[peerId].isAlive = true;
-            return;
         }
-        const num = Number(data);
-        if (!isNaN(num)) {
-            window.logToTerminal(`Received number: ${num}`);
-            this.clientPeers[peerId].conn.send(Database.get(num));
-            return;
+        else if (data === "time to die") {
+            this.handleDying(this.clientPeers[peerId].conn);
         }
-        const parsed = validateJSON(data, MessageExample);
-        if (parsed.success) {
-            Database.store(parsed.data);
-            const latest = Database.getLatest();
-            for (const cli in this.clientPeers) {
-                this.clientPeers[cli].conn.send(latest);
-            }
+        else if (!isNaN(Number(data))) {
+            // window.logToTerminal(`Received number: ${num}`);
+            this.clientPeers[peerId].conn.send(Database.get(Number(data)));
         }
         else {
-            window.logToTerminal(parsed.error);
+            const parsed = validateJSON(data, MessageExample);
+            if (parsed.success) {
+                Database.store(parsed.data);
+                const latest = Database.getLatest();
+                for (const cli in this.clientPeers) {
+                    this.clientPeers[cli].conn.send(latest);
+                }
+            }
+            else {
+                window.logToTerminal(parsed.error);
+            }
         }
     }
-    // HANDLE SERVER NODE CONNECTIONS ====================
-    static handleDying(conn) {
-        window.logToTerminal("I'M DYING! SENDING ALL DATA TO NEW NODE!");
-        window.logToTerminal("DISCONNECTING ALL USERS!");
-        for (const cli in this.clientPeers) {
-            // this.clientPeers[cli].conn.send("switch-node");
-            this.clientPeers[cli].conn.close();
-            window.logToTerminal(`DISCONNECTED ${cli}`);
+    static handleClientDisconnect(err, conn) {
+        if (err) {
+            window.logToTerminal(`CLIENT ERROR: ${err}`);
+            window.logToTerminal(`Disconnected: ${conn.peer}`);
         }
+        else {
+            window.logToTerminal(`Disconnected: ${conn.peer}`);
+        }
+        this.clientPeers[conn.peer].conn.close();
+        delete this.clientPeers[conn.peer];
+    }
+    // HANDLE CONNECTION TO THE OLD SERVER ====================
+    static handleOldServerConnection(id) {
+        window.logToTerminal(`Connecting to the old server: ${id}`);
+        this.oldNodeConn = this.serverPeer.connect(id);
+        this.oldNodeConn.on('open', () => this.handleOldServerOpen());
+    }
+    static handleOldServerOpen() {
+        window.logToTerminal(`Connected to the old server: ${this.oldNodeConn.peer}`);
+        this.oldNodeConn.on('data', (data) => this.handleOldServerData(data));
+        this.oldNodeConn.send("time to die");
+    }
+    static handleOldServerData(data) {
+        window.logToTerminal(`Received data from the old server!`);
+        Database.restore(JSON.parse(data));
+    }
+    // I AM THE OLD SERVER ====================
+    static async handleDying(conn) {
+        //confirm that this is actually the new server
+        const nodes = await this.getNodesData();
+        const nodeKeys = Object.keys(nodes).map(Number);
+        const newNodeKey = Number(Math.max(...nodeKeys));
+        const newNode = nodes[newNodeKey];
+        window.logToTerminal(`New Node: ${newNode}`);
+        if (newNode !== conn.peer) {
+            window.logToTerminal("FAKE CALL! I'M NOT DYING!");
+            return;
+        }
+        window.logToTerminal("I'M DYING! SENDING ALL DATA TO THE NEW SERVER!");
+        // window.logToTerminal("DISCONNECTING ALL USERS!");
+        // for (const cli in this.clientPeers) {
+        //     // this.clientPeers[cli].conn.send("switch-node");
+        //     this.clientPeers[cli].conn.close();
+        //     window.logToTerminal(`DISCONNECTED ${cli}`);
+        // }
         conn.send(JSON.stringify(Database.messages));
+        this.serverPeer.destroy();
         window.logToTerminal("DATA SENT! SHUTTING DOWN!");
         window.killmyself();
     }
-    // static getDataFromDyingNode() {
-    //     this.dyingNodeConn = this.serverPeer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
-    //     this.dyingNodeConn.on('open', () => {
-    //         window.logToTerminal("GETTING DATA FROM A DYING NODE!");
-    //         this.dyingNodeConn.on('data', (data) => {
-    //             Database.restore(JSON.parse(data));
-    //             this.dyingNodeConn.close();
-    //         })
-    //     })
-    //     this.dyingNodeConn.on('error', (data) => { window.logToTerminal(data) })
-    //     this.dyingNodeConn.on('close', () => { window.logToTerminal("I GOT DATA! DYING NODE CLOSED.") })
+    // HEART BEAT ==================== idk if this is needed
+    // static heartBeat() {
+    //     for (const cli in this.clientPeers) {
+    //         if (this.clientPeers[cli].isAlive === false) {
+    //             this.clientPeers[cli].conn.close();
+    //             delete this.clientPeers[cli];
+    //             // console.log("Dead:", cli);
+    //             window.logToTerminal(`Disconnected: ${cli}`);
+    //             continue;
+    //         }
+    //         // console.log("Pinging:", cli);
+    //         this.clientPeers[cli].isAlive = false;
+    //         this.clientPeers[cli].conn.send("ping");
+    //     }
     // }
-    // HEART BEAT ====================
-    static heartBeat() {
-        for (const cli in this.clientPeers) {
-            if (this.clientPeers[cli].isAlive === false) {
-                this.clientPeers[cli].conn.close();
-                delete this.clientPeers[cli];
-                // console.log("Dead:", cli);
-                window.logToTerminal(`Disconnected: ${cli}`);
-                continue;
-            }
-            // console.log("Pinging:", cli);
-            this.clientPeers[cli].isAlive = false;
-            this.clientPeers[cli].conn.send("ping");
-        }
-    }
     // SEND DATA TO CLIENT NODES ====================
     static send(peerid, message) {
         this.clientPeers[peerid].conn.send(message);

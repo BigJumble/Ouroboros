@@ -23,7 +23,7 @@ const main = async () => {
         browser: "firefox",
         args: [
             '--no-sandbox',
-            '--disable-http-cache'
+            // '--disable-http-cache',
             // '--disable-setuid-sandbox',
             // '--disable-web-security',
             // '--use-fake-ui-for-media-stream',
@@ -67,6 +67,20 @@ const main = async () => {
         } catch (error) {
             console.log(`Error: ${error}`);
         }
+    }
+
+    await page.exposeFunction('getNodes', getNodes);
+    async function getNodes() {
+        const response = await fetch('https://bigjumble.github.io/Ouroboros/nodes.json', {
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        const nodes = await response.json();
+        console.log(nodes);
+        return nodes;
     }
 
 

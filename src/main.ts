@@ -7,6 +7,7 @@ declare global {
         logToTerminal: (text: string) => void;
         killmyself: () => void;
         startPages: (payload: string) => void;
+        getNodes: () => Promise<ServerNodes>;
     }
 }
 interface Clinet {
@@ -34,10 +35,8 @@ export class MyConnections {
     // static oldNodes: ServerNodes;
 
     static async getNodesData() {
-        const response = await fetch('https://bigjumble.github.io/Ouroboros/nodes.json');
-        const data = await response.json();
-        const nodes = data as ServerNodes;
-        return nodes;
+        const nodes = await window.getNodes();
+        return nodes as ServerNodes;
     }
 
 
