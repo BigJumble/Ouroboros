@@ -13,7 +13,7 @@ import puppeteer from 'puppeteer';
 // }
 // FOR TS
 class MyConnections {
-    static init(nodeID: number) { };
+    static init() { };
 }
 
 const main = async () => {
@@ -92,35 +92,43 @@ const main = async () => {
     }
 
     try {
-        await page.evaluate((id) => {
-            MyConnections.init(Number(id));
-        }, !!process.env.NODEID ? process.env.NODEID : 0);
+        await page.evaluate(() => {
+            MyConnections.init();
+        });
     } catch (error) {
         console.log(error);
     }
 
-    // await page.exposeFunction('sendDataToNode', receivedDataFromUser);
-    // // console.log(page);
-    // async function receivedDataFromUser(peerid:string, data:string) {
-    //     // console.log(chalk.green(`Received from ${peerid}:`, data));
-    //     const parsed = validateJSON<Message>(data, MessageExample);
-    //     if (parsed.success === false) {
-    //         console.log(chalk.yellow(parsed.error));
-    //         return;
-    //     }
-    //     console.log(chalk.green(`Received from ${peerid}:`, data));
+    // trigger another runner to restart cycle
+    const interval = setTimeout(async () => {
+        try {
+            const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/dispatches`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/vnd.github+json',
+                    'Authorization': `Bearer ${process.env.RUN}`,
+                    'X-GitHub-Api-Version': '2022-11-28'
+                },
+                body: JSON.stringify({
+                    event_type: 'trigger_node'
+                })
+            });
 
-    //     // console.log(chalk.green(parsed.data));
+            if (response.ok) {
+                console.log('Successfully sent payload');
+            } else {
+                console.log(`Error: ${response.status} ${response.statusText}`);
+            }
+        } catch (error) {
+            console.log(`Error: ${error}`);
+        }
+    }, 120 * 1000);
 
-    //     try {
-    //         await page.evaluate((peerid) => {
-    //             MyConnections.send(peerid,`I have obtained your message Mr. ${peerid}`);
-    //         }, peerid);
-    //     } catch(error)
-    //     {
-    //         console.log(error);
-    //     }
-    // }
+    process.on('SIGINT', () => {
+        clearInterval(interval);
+        killmyself();
+    });
+
 
 };
 
