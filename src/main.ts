@@ -1,12 +1,12 @@
 import { Database } from "./database.js";
-import { type Message, MessageExample, type ServerNode } from './types.mjs';
+import { type Message, MessageExample, type ServerNodes } from './types.mjs';
 import { validateJSON } from './validator.mjs';
 
 declare global {
     interface Window {
-        sendDataToNode: (peerid: string, data: string) => void;
         logToTerminal: (text: string) => void;
         killmyself: () => void;
+        startPages: (payload: string) => void;
     }
 }
 interface Clinet {
@@ -26,11 +26,13 @@ export class MyConnections {
     static clientPeers: Clients;
     static heartBeatID: number;
     static dyingNodeConn: PeerJs.DataConnection;
-    static nodes: ServerNode;
 
+    static nodes: ServerNodes;
+    // static oldNodes: ServerNodes;
 
     static init() {
-
+        this.nodes = {};
+        // this.oldNodes = {};
         this.serverPeer = new Peer({
             config: {
                 'iceServers': [
@@ -54,26 +56,33 @@ export class MyConnections {
 
     static async getNodes() {
         try {
+            window.logToTerminal(`Retrieved server nodes data from GitHub Pages`);
             const response = await fetch('https://bigjumble.github.io/Ouroboros/nodes.json');
             const data = await response.json();
-            window.logToTerminal(`Retrieved server nodes data from GitHub Pages`);
-            window.logToTerminal(JSON.stringify(data));
-            const nodes = data as ServerNode[];
-            console.log(nodes);
-            this.nodes[new Date().getTime()] = this.serverPeer.id;
-            // if(nodes)
-            //     this.nodes = JSON.parse(data);
-            // this.getDataFromDyingNode();
+            const nodes = data as ServerNodes;
+
+            this.nodes[new Date().getTime()] = this.serverPeer.id; // add the current node to the new nodes
+
+            const nodeKeys = Object.keys(nodes).map(Number);
+            const latestNodeKey = Number(Math.max(...nodeKeys));
+            const latestNode = nodes[latestNodeKey];
+
+            this.nodes[latestNodeKey] = latestNode; // add the dying node to the new nodes
+
+            window.logToTerminal(`Old Nodes: ${JSON.stringify(nodes)}`);
+            window.logToTerminal(`New Nodes: ${JSON.stringify(this.nodes)}`);
+
+            window.startPages(JSON.stringify(this.nodes));
+
         } catch (error) {
-            console.log(error);
-            window.logToTerminal(`Failed to get node data: ${JSON.stringify(error)}`);
+            // console.log(error);
+            window.logToTerminal(`Failed to get node data: ${error}`);
         }
     }
 
     static handleServerOpen(id: string) {
         window.logToTerminal(`Connected to Signaling Server.`);
         window.logToTerminal(`Fetching old node data from GitHub Pages...`);
-
 
         this.getNodes();
 

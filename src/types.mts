@@ -20,7 +20,7 @@ export const MessageExample: Message = {
     // date: 0
 }
 
-export interface ServerNode {
+export interface ServerNodes {
     [key: number]: string
 }
 

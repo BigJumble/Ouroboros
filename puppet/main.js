@@ -8,7 +8,10 @@ export class MyConnections {
     static heartBeatID;
     static dyingNodeConn;
     static nodes;
+    // static oldNodes: ServerNodes;
     static init() {
+        this.nodes = {};
+        // this.oldNodes = {};
         this.serverPeer = new Peer({
             config: {
                 'iceServers': [
@@ -30,20 +33,22 @@ export class MyConnections {
     }
     static async getNodes() {
         try {
+            window.logToTerminal(`Retrieved server nodes data from GitHub Pages`);
             const response = await fetch('https://bigjumble.github.io/Ouroboros/nodes.json');
             const data = await response.json();
-            window.logToTerminal(`Retrieved server nodes data from GitHub Pages`);
-            window.logToTerminal(JSON.stringify(data));
             const nodes = data;
-            console.log(nodes);
-            this.nodes.push({ status: "alive", id: this.serverPeer.id });
-            // if(nodes)
-            //     this.nodes = JSON.parse(data);
-            // this.getDataFromDyingNode();
+            this.nodes[new Date().getTime()] = this.serverPeer.id; // add the current node to the new nodes
+            const nodeKeys = Object.keys(nodes).map(Number);
+            const latestNodeKey = Number(Math.max(...nodeKeys));
+            const latestNode = nodes[latestNodeKey];
+            this.nodes[latestNodeKey] = latestNode; // add the dying node to the new nodes
+            window.logToTerminal(`Old Nodes: ${JSON.stringify(nodes)}`);
+            window.logToTerminal(`New Nodes: ${JSON.stringify(this.nodes)}`);
+            window.startPages(JSON.stringify(this.nodes));
         }
         catch (error) {
-            console.log(error);
-            window.logToTerminal(`Failed to get node data: ${JSON.stringify(error)}`);
+            // console.log(error);
+            window.logToTerminal(`Failed to get node data: ${error}`);
         }
     }
     static handleServerOpen(id) {
