@@ -30,7 +30,7 @@ jobs:
 
       - name: Process incoming data
         env:
-          PAYLOAD: ${{ github.event.client_payload }}
+          PAYLOAD: ${{ toJSON(github.event.client_payload) }}
         run: |
           echo "$PAYLOAD" > ./docs/nodes.json
           
