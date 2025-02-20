@@ -1,4 +1,4 @@
-[
-    {"status:":"alive","id":"null"},
-    {"status:":"dying","id":"null"}
-]
+{
+    "0": "null",
+    "1": "null"
+}

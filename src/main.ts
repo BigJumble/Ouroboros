@@ -1,5 +1,5 @@
 import { Database } from "./database.js";
-import { type Message, MessageExample } from './types.mjs';
+import { type Message, MessageExample, type ServerNode } from './types.mjs';
 import { validateJSON } from './validator.mjs';
 
 declare global {
@@ -26,7 +26,7 @@ export class MyConnections {
     static clientPeers: Clients;
     static heartBeatID: number;
     static dyingNodeConn: PeerJs.DataConnection;
-    static nodes: Node[];
+    static nodes: ServerNode;
 
 
     static init() {
@@ -58,11 +58,14 @@ export class MyConnections {
             const data = await response.json();
             window.logToTerminal(`Retrieved server nodes data from GitHub Pages`);
             window.logToTerminal(JSON.stringify(data));
-            const nodes = JSON.parse(data) as Node[];
-            if(nodes)
-            this.nodes = JSON.parse(data);
+            const nodes = data as ServerNode[];
+            console.log(nodes);
+            this.nodes[new Date().getTime()] = this.serverPeer.id;
+            // if(nodes)
+            //     this.nodes = JSON.parse(data);
             // this.getDataFromDyingNode();
         } catch (error) {
+            console.log(error);
             window.logToTerminal(`Failed to get node data: ${JSON.stringify(error)}`);
         }
     }

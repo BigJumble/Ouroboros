@@ -34,12 +34,15 @@ export class MyConnections {
             const data = await response.json();
             window.logToTerminal(`Retrieved server nodes data from GitHub Pages`);
             window.logToTerminal(JSON.stringify(data));
-            const nodes = JSON.parse(data);
-            if (nodes)
-                this.nodes = JSON.parse(data);
+            const nodes = data;
+            console.log(nodes);
+            this.nodes.push({ status: "alive", id: this.serverPeer.id });
+            // if(nodes)
+            //     this.nodes = JSON.parse(data);
             // this.getDataFromDyingNode();
         }
         catch (error) {
+            console.log(error);
             window.logToTerminal(`Failed to get node data: ${JSON.stringify(error)}`);
         }
     }
