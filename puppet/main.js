@@ -1,36 +1,14 @@
 import { Database } from "./database.js";
-import { type Message, MessageExample } from './types.mjs';
+import { MessageExample } from './types.mjs';
 import { validateJSON } from './validator.mjs';
-
-declare global {
-    interface Window {
-        sendDataToNode: (peerid: string, data: string) => void;
-        logToTerminal: (text: string) => void;
-        killmyself: () => void;
-    }
-}
-interface Clinet {
-    conn: PeerJs.DataConnection,
-    isAlive: boolean
-}
-
-interface Clients {
-    [key: string]: Clinet;
-
-}
-
 export class MyConnections {
     // MAKE SURE NOTHING IS EVALUATED ON LOAD, SINCE THIS CLASS IS USED IN ./server FOR TYPE CHECKING
-
-    static serverPeer: PeerJs.Peer;
-    static clientPeers: Clients;
-    static heartBeatID: number;
-    static dyingNodeConn: PeerJs.DataConnection;
-    static nodes: Node[];
-
-
+    static serverPeer;
+    static clientPeers;
+    static heartBeatID;
+    static dyingNodeConn;
+    static nodes;
     static init() {
-
         this.serverPeer = new Peer({
             config: {
                 'iceServers': [
@@ -47,53 +25,41 @@ export class MyConnections {
                 ]
             }
         });
-
         this.serverPeer.on('open', (id) => this.handleServerOpen(id));
         this.serverPeer.on("error", (err) => this.handleServerError(err));
     }
-
     static async getNodes() {
         try {
             const response = await fetch('https://bigjumble.github.io/Ouroboros/nodes.json');
             const data = await response.json();
             window.logToTerminal(`Retrieved server nodes data from GitHub Pages`);
             window.logToTerminal(JSON.stringify(data));
-            const nodes = JSON.parse(data) as Node[];
-            if(nodes)
-            this.nodes = JSON.parse(data);
+            const nodes = JSON.parse(data);
+            if (nodes)
+                this.nodes = JSON.parse(data);
             // this.getDataFromDyingNode();
-        } catch (error) {
+        }
+        catch (error) {
             window.logToTerminal(`Failed to get node data: ${JSON.stringify(error)}`);
         }
     }
-
-    static handleServerOpen(id: string) {
+    static handleServerOpen(id) {
         window.logToTerminal(`Connected to Signaling Server.`);
         window.logToTerminal(`Fetching old node data from GitHub Pages...`);
-
-
         this.getNodes();
-
-
-        this.serverPeer.on('connection', (conn: PeerJs.DataConnection) => this.handleConnection(conn));
+        this.serverPeer.on('connection', (conn) => this.handleConnection(conn));
         this.serverPeer.on("disconnected", () => this.handleServerDisconnect());
-
         // setInterval(() => this.heartBeat(), 15000);
-
     }
-
     static handleServerDisconnect() {
         window.logToTerminal("DISCONNECTED FROM SERVER! RECONNECTING...");
         this.serverPeer.reconnect();
     }
-
-    static handleServerError(err: string) {
+    static handleServerError(err) {
         // if (`${err}`.includes("ouroboros-node")) return;
-
         if (`${err}`.includes("Lost connection to server")) {
             this.serverPeer.reconnect();
         }
-
         // if (!`${err}`.includes("is taken")) {
         //     window.logToTerminal(`${err}, CLEANING UP!`);
         //     this.cleanup();
@@ -102,7 +68,6 @@ export class MyConnections {
         //     window.logToTerminal(`ALL IS LOST AND THERE IS NO HOPE! jk`);
         // }
     }
-
     static cleanup() {
         for (const peerId in this.clientPeers) {
             this.clientPeers[peerId].conn.close();
@@ -113,29 +78,23 @@ export class MyConnections {
         }
         this.serverPeer.destroy();
         this.init();
-
     }
-
     // static getDataFromDyingNode() {
     //     this.dyingNodeConn = this.serverPeer.connect(`ouroboros-node-${(nodeId + 1) % 2}-3c4n89384fyn73c4345`);
     //     this.dyingNodeConn.on('open', () => {
     //         window.logToTerminal("GETTING DATA FROM A DYING NODE!");
-
     //         this.dyingNodeConn.on('data', (data) => {
     //             Database.restore(JSON.parse(data));
     //             this.dyingNodeConn.close();
-
     //         })
     //     })
     //     this.dyingNodeConn.on('error', (data) => { window.logToTerminal(data) })
     //     this.dyingNodeConn.on('close', () => { window.logToTerminal("I GOT DATA! DYING NODE CLOSED.") })
     // }
-
-    static handleConnection(conn: PeerJs.DataConnection) {
+    static handleConnection(conn) {
         conn.on('open', () => this.handleOpen(conn));
     }
-
-    static handleOpen(conn: PeerJs.DataConnection) {
+    static handleOpen(conn) {
         window.logToTerminal(conn.peer);
         // if (conn.peer === `ouroboros-node-${(this.nodeId + 1) % 2}-3c4n89384fyn73c4345`) {
         //     this.handleDying(conn);
@@ -144,8 +103,7 @@ export class MyConnections {
         this.clientPeers[conn.peer] = { conn, isAlive: true };
         conn.on('data', (data) => this.handleData(conn.peer, data));
     }
-
-    static handleData(peerId: string, data: any) {
+    static handleData(peerId, data) {
         if (data === "pong") {
             this.clientPeers[peerId].isAlive = true;
             return;
@@ -156,38 +114,33 @@ export class MyConnections {
             this.clientPeers[peerId].conn.send(Database.get(num));
             return;
         }
-        const parsed = validateJSON<Message>(data, MessageExample);
+        const parsed = validateJSON(data, MessageExample);
         if (parsed.success) {
-            Database.store(parsed.data!);
+            Database.store(parsed.data);
             const latest = Database.getLatest();
             for (const cli in this.clientPeers) {
                 this.clientPeers[cli].conn.send(latest);
             }
         }
         else {
-            window.logToTerminal(parsed.error!);
+            window.logToTerminal(parsed.error);
         }
         // window.sendDataToNode(peerId, data);
     }
-
-    static handleDying(conn: PeerJs.DataConnection) {
+    static handleDying(conn) {
         window.logToTerminal("I'M DYING! SENDING ALL DATA TO NEW NODE!");
         window.logToTerminal("DISCONNECTING ALL USERS!");
-
         for (const cli in this.clientPeers) {
             // this.clientPeers[cli].conn.send("switch-node");
             this.clientPeers[cli].conn.close();
             window.logToTerminal(`DISCONNECTED ${cli}`);
         }
-
         conn.send(JSON.stringify(Database.messages));
         window.logToTerminal("DATA SENT! SHUTTING DOWN!");
         window.killmyself();
     }
-
     static heartBeat() {
         for (const cli in this.clientPeers) {
-
             if (this.clientPeers[cli].isAlive === false) {
                 this.clientPeers[cli].conn.close();
                 delete this.clientPeers[cli];
@@ -200,8 +153,7 @@ export class MyConnections {
             this.clientPeers[cli].conn.send("ping");
         }
     }
-
-    static send(peerid: string, message: string) {
+    static send(peerid, message) {
         this.clientPeers[peerid].conn.send(message);
     }
 }

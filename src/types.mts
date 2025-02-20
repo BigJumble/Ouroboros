@@ -19,3 +19,9 @@ export const MessageExample: Message = {
     message: "",
     // date: 0
 }
+
+export interface Node {
+    id: string;
+    status: "alive" | "dying";
+}
+
