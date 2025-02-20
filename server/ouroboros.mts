@@ -55,7 +55,7 @@ const main = async () => {
                 },
                 body: JSON.stringify({
                     event_type: 'trigger_static',
-                    client_payload: JSON.parse(payload)
+                    client_payload: payload
                 })
             });
 
