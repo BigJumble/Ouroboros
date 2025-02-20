@@ -232,13 +232,13 @@ export class MyConnections {
         const nodeKeys = Object.keys(nodes).map(Number);
         const newNodeKey = Number(Math.max(...nodeKeys));
         const newNode = nodes[newNodeKey];
-        window.logToTerminal(`New Node: ${newNode}`);
+
         if (newNode !== conn.peer) {
             window.logToTerminal("FAKE CALL! I'M NOT DYING!");
             return;
         }
 
-        window.logToTerminal("I'M DYING! SENDING ALL DATA TO THE NEW SERVER!");
+        await window.logToTerminal("I'M DYING! SENDING ALL DATA TO THE NEW SERVER!");
         // window.logToTerminal("DISCONNECTING ALL USERS!");
 
         // for (const cli in this.clientPeers) {
@@ -249,7 +249,7 @@ export class MyConnections {
 
         conn.send(JSON.stringify(Database.messages));
         this.serverPeer.destroy();
-        window.logToTerminal("DATA SENT! SHUTTING DOWN!");
+        await window.logToTerminal("DATA SENT! SHUTTING DOWN!");
         window.killmyself();
     }
 
