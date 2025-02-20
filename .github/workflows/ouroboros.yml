@@ -20,11 +20,11 @@ jobs:
           cache: npm
     
       - name: Install dependencies
-        env:
-          RUN: ${{ secrets.RUN }}
         run: npm run setup
 
       - name: start API server
+        env:
+          RUN: ${{ secrets.RUN }}
         run: HEADLESS=true npm run serve
 
   concurrent_tasks:
