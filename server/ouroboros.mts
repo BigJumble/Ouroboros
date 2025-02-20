@@ -45,6 +45,8 @@ const main = async () => {
     await page.exposeFunction('startPages', startPages);
     async function startPages(payload: string) {
         console.log(chalk.gray('Sending payload to GitHub Pages...'));
+        // console.log(process.env.RUN);
+        console.log(process.env);
         try {
             const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/dispatches`, {
                 method: 'POST',
