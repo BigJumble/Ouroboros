@@ -2,6 +2,7 @@
 name: Deploy server ID to Pages
 
 on:
+  workflow_dispatch:
   repository_dispatch:
       types: [trigger_static]
 
