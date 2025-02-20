@@ -109,7 +109,7 @@ export class MyConnections {
 
         setTimeout(() => {
             this.handleOldServerConnection(this.oldNodeID);
-        }, 120000); // wait 2 minutes for Pages to update
+        }, 80000); // wait 1.2 minutes for Pages to update
 
 
         // setInterval(() => this.heartBeat(), 15000);

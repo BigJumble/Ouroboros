@@ -3,8 +3,6 @@ import puppeteer from 'puppeteer';
 
 // import { validateJSON } from '../src/validator.mts';
 // import { type Message, MessageExample } from '../src/types.mts';
-import chalk from 'chalk';
-import { json } from 'stream/consumers';
 
 // import {MyConnections} from "../src/main.ts";
 
@@ -25,6 +23,7 @@ const main = async () => {
         browser: "firefox",
         args: [
             '--no-sandbox',
+            '--disable-http-cache'
             // '--disable-setuid-sandbox',
             // '--disable-web-security',
             // '--use-fake-ui-for-media-stream',
@@ -34,7 +33,7 @@ const main = async () => {
     const page = await browser.newPage();
 
     const filePath = path.resolve('./puppet/index.html');
-    console.log(chalk.gray('Navigating to:', `file://${filePath}`));
+    console.log('Navigating to:', `file://${filePath}`);
     await page.goto(`file://${filePath}`);
 
 
@@ -45,7 +44,7 @@ const main = async () => {
 
     await page.exposeFunction('startPages', startPages);
     async function startPages(payload: string) {
-        console.log(chalk.gray('Sending payload to GitHub Pages...'));
+        console.log('Sending payload to GitHub Pages...');
         try {
             const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/dispatches`, {
                 method: 'POST',
@@ -61,12 +60,12 @@ const main = async () => {
             });
 
             if (response.ok) {
-                console.log(chalk.green('Successfully sent payload'));
+                console.log('Successfully sent payload');
             } else {
-                console.log(chalk.red(`Error: ${response.status} ${response.statusText}`));
+                console.log(`Error: ${response.status} ${response.statusText}`);
             }
         } catch (error) {
-            console.log(chalk.red(`Error: ${error}`));
+            console.log(`Error: ${error}`);
         }
     }
 
