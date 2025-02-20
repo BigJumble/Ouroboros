@@ -231,10 +231,10 @@ export class MyConnections {
         //confirm that this is actually the new server
         const nodes = await this.getNodesData();
         const nodeKeys = Object.keys(nodes).map(Number);
-        const lastNodeKey = Number(Math.min(...nodeKeys));
-        const lastNode = nodes[lastNodeKey];
-
-        if (lastNode !== this.serverPeer.id) {
+        const newNodeKey = Number(Math.max(...nodeKeys));
+        const newNode = nodes[newNodeKey];
+        window.logToTerminal(`New Node: ${newNode}`);
+        if (newNode !== conn.peer) {
             window.logToTerminal("FAKE CALL! I'M NOT DYING!");
             return;
         }
