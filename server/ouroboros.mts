@@ -4,6 +4,7 @@ import puppeteer from 'puppeteer';
 // import { validateJSON } from '../src/validator.mts';
 // import { type Message, MessageExample } from '../src/types.mts';
 import chalk from 'chalk';
+import { json } from 'stream/consumers';
 
 // import {MyConnections} from "../src/main.ts";
 
@@ -55,7 +56,7 @@ const main = async () => {
                 },
                 body: JSON.stringify({
                     event_type: 'trigger_static',
-                    client_payload: payload
+                    client_payload: JSON.parse(payload)
                 })
             });
 
