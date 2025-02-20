@@ -33,6 +33,14 @@ export class MyConnections {
     static oldNodeConn: PeerJs.DataConnection;
     // static oldNodes: ServerNodes;
 
+    static async getNodesData() {
+        const response = await fetch('https://bigjumble.github.io/Ouroboros/nodes.json');
+        const data = await response.json();
+        const nodes = data as ServerNodes;
+        return nodes;
+    }
+
+
     static init() {
         this.nodes = {};
 
@@ -59,12 +67,6 @@ export class MyConnections {
         this.serverPeer.on("error", (err) => this.handleServerError(err));
     }
 
-    static async getNodesData() {
-        const response = await fetch('https://bigjumble.github.io/Ouroboros/nodes.json');
-        const data = await response.json();
-        const nodes = data as ServerNodes;
-        return nodes;
-    }
 
     // HANDLE CURRENT SERVER CONNECTION ====================
 
@@ -107,7 +109,7 @@ export class MyConnections {
 
         setTimeout(() => {
             this.handleOldServerConnection(this.oldNodeID);
-        }, 300000); // wait 5 minutes for Pages to update
+        }, 120000); // wait 2 minutes for Pages to update
 
 
         // setInterval(() => this.heartBeat(), 15000);

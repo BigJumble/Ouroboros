@@ -30,8 +30,8 @@ jobs:
   concurrent_tasks:
     runs-on: ubuntu-latest
     steps:
-      - name: RUN API SERVER FOR 5H, 3min for test
-        run: sleep 18000
+      - name: RUN API SERVER FOR 5H, 5min for testing
+        run: sleep 300
 
       - name: Run this Action again
         run: |
