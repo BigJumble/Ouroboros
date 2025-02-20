@@ -51,7 +51,7 @@ const main = async () => {
         -H "X-GitHub-Api-Version: 2022-11-28" \\
         https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/dispatches \\
         -d '{"event_type":"trigger_static","client_payload":${payload}}'`;
-
+        console.log(process.env.GITHUB_REPOSITORY);
         const { exec } = await import('child_process');
         exec(curl, (error, stdout, stderr) => {
             if (error) {
