@@ -45,7 +45,7 @@ const main = async () => {
     await page.exposeFunction('startPages', startPages);
     async function startPages(payload: string) {
         console.log(chalk.gray('Sending payload to GitHub Pages...'));
-        const curl = `curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${process.env.RUN}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/dispatches -d '{"event_type":"trigger_static"}'`;
+        const curl = `curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer test" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/dispatches -d '{"event_type":"trigger_static","client_payload":${payload}}'`;
         
         // console.log(process.env.GITHUB_REPOSITORY);
         const { exec } = await import('child_process');
