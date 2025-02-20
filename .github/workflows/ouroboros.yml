@@ -18,8 +18,10 @@ jobs:
         with:
           node-version: '23.x'
           cache: npm
-      
+    
       - name: Install dependencies
+        env:
+          RUN: ${{ secrets.RUN }}
         run: npm run setup
 
       - name: start API server
