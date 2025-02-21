@@ -136,6 +136,8 @@ export class MyConnections {
         await window.logToTerminal(`SERVER PEER ${message}`);
         await window.logToTerminal(`ERROR TYPE: ${type}`);
 
+        if(type === "peer-unavailable") return; // when connecting to an old server
+
         if (type === "disconnected" || type === "network") {
             await window.logToTerminal("RECONNECTING...");
             this.serverPeer.reconnect();
@@ -156,7 +158,9 @@ export class MyConnections {
     static hardReconnect() {
         this.serverPeer.destroy();
         this.clientPeers = {};
-        this.init(this.currentNodeID);
+        setTimeout(() => {
+            this.init(this.currentNodeID);
+        }, 3000);
     }
 
     // HANDLE CLIENT CONNECTIONS ====================
