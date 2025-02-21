@@ -32,7 +32,9 @@ const main = async () => {
 
     await page.exposeFunction('logToTerminal', logToTerminal);
     async function logToTerminal(text: string) {
-        console.log(text);
+        const date = new Date();
+        console.log(`${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`, text);        
+        return;
     }
 
     await page.exposeFunction('startPages', startPages);
@@ -72,7 +74,7 @@ const main = async () => {
             }
         });
         const nodes = await response.json();
-        console.log(nodes);
+        // console.log(nodes);
         return nodes;
     }
 
