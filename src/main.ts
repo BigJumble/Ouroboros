@@ -3,6 +3,11 @@ import { type Message, MessageExample, type ServerNodes } from './types';
 import { validateJSON } from './validator';
 import Peer, { DataConnection } from 'peerjs';
 
+type PeerErrorType = "disconnected" | "browser-incompatible" | "invalid-id" | "invalid-key" | "network" | 
+    "peer-unavailable" | "ssl-unavailable" | "server-error" | "socket-error" | "socket-closed" | 
+    "unavailable-id" | "webrtc" ;
+type ClientErrorType = "not-open-yet" | "message-too-big" | "negotiation-failed" | "connection-closed";
+
 declare global {
     interface Window {
         logToTerminal: (text: string) => void;
@@ -36,30 +41,41 @@ export class MyConnections {
     }
 
 
-    static init() {
+    static init(id: string | null = null) {
         this.nodes = {};
 
         // this.oldNodes = {};
         this.clientPeers = {};
-        this.serverPeer = new Peer({
-            config: {
-                'iceServers': [
-                    // { urls: "stun:stun.l.google.com:19302" },
-                    // { urls: "stun:stun.l.google.com:5349" },
-                    // { urls: "stun:stun1.l.google.com:3478" },
-                    // { urls: "stun:stun1.l.google.com:5349" },
-                    // { urls: "stun:stun2.l.google.com:19302" },
-                    // { urls: "stun:stun2.l.google.com:5349" },
+        if(id)
+        {
+            this.serverPeer = new Peer(id, {
+                config: {
+                    'iceServers': [
                     { urls: "stun:stun3.l.google.com:3478" },
                     { urls: "stun:stun3.l.google.com:5349" },
                     { urls: "stun:stun4.l.google.com:19302" },
                     { urls: "stun:stun4.l.google.com:5349" }
                 ]
-            }
-        });
+                }
+            });
+        }
+        else
+        {
+
+            this.serverPeer = new Peer({
+                config: {
+                    'iceServers': [
+                    { urls: "stun:stun3.l.google.com:3478" },
+                    { urls: "stun:stun3.l.google.com:5349" },
+                    { urls: "stun:stun4.l.google.com:19302" },
+                    { urls: "stun:stun4.l.google.com:5349" }
+                ]
+                }
+            });
+        }
 
         this.serverPeer.on('open', (id) => this.handleServerOpen(id));
-        this.serverPeer.on("error", (err) => this.handleServerError(err));
+        this.serverPeer.on("error", (err) => this.handleServerError(err.message, err.type));    
     }
 
 
@@ -116,33 +132,31 @@ export class MyConnections {
         this.serverPeer.reconnect();
     }
 
-    static handleServerError(err: any) {
-        // if (`${err}`.includes("ouroboros-node")) return;
+    static async handleServerError(message: string, type: PeerErrorType) {
+        await window.logToTerminal(`SERVER PEER ${message}`);
+        await window.logToTerminal(`ERROR TYPE: ${type}`);
 
-        if (err.type === "network") {
+        if (type === "disconnected" || type === "network") {
+            await window.logToTerminal("RECONNECTING...");
             this.serverPeer.reconnect();
         }
-
-        // if (!`${err}`.includes("is taken")) {
-        //     window.logToTerminal(`${err}, CLEANING UP!`);
-        //     this.cleanup();
-        // }
-        // else {
-        //     window.logToTerminal(`ALL IS LOST AND THERE IS NO HOPE!`);
-        // }
+        else if(type !== "unavailable-id")
+        {
+            await window.logToTerminal("HARD RECONNECTING...");
+            this.hardReconnect();
+        }
+        else
+        {
+            await window.logToTerminal("CAN'T RECONNECT! UNAVAILABLE ID! GGWP! SHUTTING DOWN!");
+            this.serverPeer.destroy();
+            window.killmyself();
+        }
     }
 
-    static cleanup() {
-        for (const peerId in this.clientPeers) {
-            this.clientPeers[peerId].close();
-            delete this.clientPeers[peerId];
-        }
-        if (this.dyingNodeConn) {
-            this.dyingNodeConn.close();
-        }
+    static hardReconnect() {
         this.serverPeer.destroy();
-        this.init();
-
+        this.clientPeers = {};
+        this.init(this.currentNodeID);
     }
 
     // HANDLE CLIENT CONNECTIONS ====================
@@ -150,8 +164,8 @@ export class MyConnections {
     static handleConnection(conn: DataConnection) {
         conn.on('open', () => this.handleOpen(conn));
 
-        conn.on('error', (err) => this.handleClientDisconnect(err, conn));
-        conn.on('close', () => this.handleClientDisconnect(null, conn));
+        conn.on('error', (err) => this.handleClientDisconnect(err.message,err.type, conn));
+        conn.on('close', () => this.handleClientDisconnect(null, null, conn));
     }
 
     static handleOpen(conn: DataConnection) {
@@ -184,9 +198,11 @@ export class MyConnections {
         }
     }
 
-    static handleClientDisconnect(err: any | null, conn: DataConnection) {
-        if (err) {
-            window.logToTerminal(`CLIENT ERROR: ${err}`);
+    static handleClientDisconnect(message: string | null, type: ClientErrorType | null, conn: DataConnection) {
+
+        if (message) {
+            window.logToTerminal(`CLIENT: ${message}`);
+            window.logToTerminal(`CLIENT ERROR TYPE: ${type}`);
             window.logToTerminal(`Disconnected: ${conn.peer}`);
         }
         else {
