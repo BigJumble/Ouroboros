@@ -129,7 +129,8 @@ export class MyConnections {
 
     static handleServerDisconnect() {
         window.logToTerminal("DISCONNECTED FROM SERVER! RECONNECTING...");
-        this.serverPeer.reconnect();
+        this.hardReconnect();
+        // this.serverPeer.reconnect();
     }
 
     static async handleServerError(message: string, type: PeerErrorType, cause:unknown, name:string) {
@@ -159,7 +160,7 @@ export class MyConnections {
         this.clientPeers = {};
         setTimeout(() => {
             this.init(this.currentNodeID);
-        }, 3000);
+        }, 5000);
     }
 
     // HANDLE CLIENT CONNECTIONS ====================
