@@ -1,4 +1,4 @@
-import type { Message, MetaMessage } from "./types.mts";
+import type { Message, MetaMessage } from "./types";
 export class Database{
 
     static messages: MetaMessage[] = [];

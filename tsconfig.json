@@ -1,19 +1,12 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "outDir": "./puppet",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "types": ["@types/peerjs"],
-    
-    "lib": ["ESNext", "DOM", "DOM.Iterable"]
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
-} 
+    "compilerOptions": {
+      "target": "ESNext",
+      "module": "ESNext",
+      "outDir": "./dist",
+      "strict": true,
+      "esModuleInterop": true,
+      "moduleResolution": "bundler",
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"]
+  } 

@@ -1,4 +1,4 @@
-import type { ValidationResult } from "./types.mts";
+import type { ValidationResult } from "./types";
 
 function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);

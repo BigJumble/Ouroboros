@@ -20,7 +20,12 @@ jobs:
           cache: npm
     
       - name: Install dependencies
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: true
         run: npm run setup
+
+      - name: Build
+        run: npm run build
 
       - name: start API server
         env:

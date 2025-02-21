@@ -1,6 +1,7 @@
-import { Database } from "./database.js";
-import { type Message, MessageExample, type ServerNodes } from './types.mjs';
-import { validateJSON } from './validator.mjs';
+import { Database } from "./database";
+import { type Message, MessageExample, type ServerNodes } from './types';
+import { validateJSON } from './validator';
+import Peer, { DataConnection } from 'peerjs';
 
 declare global {
     interface Window {
@@ -12,21 +13,21 @@ declare global {
 }
 
 interface Clients {
-    [key: string]: PeerJs.DataConnection;
+    [key: string]: DataConnection;
 }
 
 export class MyConnections {
     // MAKE SURE NOTHING IS EVALUATED ON LOAD, SINCE THIS CLASS IS USED IN ./server FOR TYPE CHECKING
 
-    static serverPeer: PeerJs.Peer;
+    static serverPeer: Peer;
     static clientPeers: Clients;
     static heartBeatID: number;
-    static dyingNodeConn: PeerJs.DataConnection;
+    static dyingNodeConn: DataConnection;
 
     static nodes: ServerNodes;
     static currentNodeID: string;
     static oldNodeID: string;
-    static oldNodeConn: PeerJs.DataConnection;
+    static oldNodeConn: DataConnection;
     // static oldNodes: ServerNodes;
 
     static async getNodesData() {
@@ -95,7 +96,7 @@ export class MyConnections {
 
     static async handleServerOpen(id: string) {
         window.logToTerminal(`Connected to Signaling Server as: ${id}`);
-        this.serverPeer.on('connection', (conn: PeerJs.DataConnection) => this.handleConnection(conn));
+        this.serverPeer.on('connection', (conn: DataConnection) => this.handleConnection(conn));
         this.serverPeer.on("disconnected", () => this.handleServerDisconnect());
 
         window.logToTerminal(`Sending nodes data to GitHub Pages...`);
@@ -146,14 +147,14 @@ export class MyConnections {
 
     // HANDLE CLIENT CONNECTIONS ====================
 
-    static handleConnection(conn: PeerJs.DataConnection) {
+    static handleConnection(conn: DataConnection) {
         conn.on('open', () => this.handleOpen(conn));
 
         conn.on('error', (err) => this.handleClientDisconnect(err, conn));
         conn.on('close', () => this.handleClientDisconnect(null, conn));
     }
 
-    static handleOpen(conn: PeerJs.DataConnection) {
+    static handleOpen(conn: DataConnection) {
         window.logToTerminal(`User connected: ${conn.peer}`);
         this.clientPeers[conn.peer] = conn;
         conn.on('data', (data) => this.handleData(conn.peer, data));
@@ -183,7 +184,7 @@ export class MyConnections {
         }
     }
 
-    static handleClientDisconnect(err: any | null, conn: PeerJs.DataConnection) {
+    static handleClientDisconnect(err: any | null, conn: DataConnection) {
         if (err) {
             window.logToTerminal(`CLIENT ERROR: ${err}`);
             window.logToTerminal(`Disconnected: ${conn.peer}`);
@@ -218,7 +219,7 @@ export class MyConnections {
 
     // I AM THE OLD SERVER ====================
 
-    static async handleDying(conn: PeerJs.DataConnection) {
+    static async handleDying(conn: DataConnection) {
 
         //confirm that this is actually the new server
         const nodes = await this.getNodesData();

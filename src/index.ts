@@ -1,5 +1,5 @@
-import { MyConnections } from "./main.js";
-import { Database } from "./database.js";
+import { MyConnections } from "./main";
+import { Database } from "./database";
 
 declare global {
     interface Window {

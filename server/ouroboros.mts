@@ -19,9 +19,15 @@ const main = async () => {
     });
     const page = await browser.newPage();
 
-    const filePath = path.resolve('./puppet/index.html');
-    console.log('Navigating to:', `file://${filePath}`);
-    await page.goto(`file://${filePath}`);
+    // const filePath = path.resolve('./dist/index.html');
+    // console.log('Navigating to:', `file://${filePath}`);
+    // await page.goto(`file://${filePath}`);
+
+    const filePath = path.resolve('./dist/bundle.js');
+    // console.log('Evaluating:', filePath);
+    await page.addScriptTag({
+        path: filePath
+    });
 
 
     await page.exposeFunction('logToTerminal', logToTerminal);
@@ -107,7 +113,7 @@ const main = async () => {
         } catch (error) {
             console.log(`Error: ${error}`);
         }
-    }, 120 * 1000);
+    }, 5 * 60 * 60 * 1000); // 5 hours
 
     process.on('SIGINT', () => {
         clearInterval(interval);
