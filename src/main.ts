@@ -10,14 +10,9 @@ declare global {
         getNodes: () => Promise<ServerNodes>;
     }
 }
-interface Clinet {
-    conn: PeerJs.DataConnection,
-    isAlive: boolean
-}
 
 interface Clients {
-    [key: string]: Clinet;
-
+    [key: string]: PeerJs.DataConnection;
 }
 
 export class MyConnections {
@@ -120,10 +115,10 @@ export class MyConnections {
         this.serverPeer.reconnect();
     }
 
-    static handleServerError(err: string) {
+    static handleServerError(err: any) {
         // if (`${err}`.includes("ouroboros-node")) return;
 
-        if (`${err}`.includes("Lost connection to server")) {
+        if (err.type === "network") {
             this.serverPeer.reconnect();
         }
 
@@ -138,7 +133,7 @@ export class MyConnections {
 
     static cleanup() {
         for (const peerId in this.clientPeers) {
-            this.clientPeers[peerId].conn.close();
+            this.clientPeers[peerId].close();
             delete this.clientPeers[peerId];
         }
         if (this.dyingNodeConn) {
@@ -160,20 +155,18 @@ export class MyConnections {
 
     static handleOpen(conn: PeerJs.DataConnection) {
         window.logToTerminal(`User connected: ${conn.peer}`);
-        this.clientPeers[conn.peer] = { conn, isAlive: true };
+        this.clientPeers[conn.peer] = conn;
         conn.on('data', (data) => this.handleData(conn.peer, data));
     }
 
     static handleData(peerId: string, data: any) {
-        if (data === "pong") {
-            this.clientPeers[peerId].isAlive = true;
-        }
-        else if (data === "time to die") {
-            this.handleDying(this.clientPeers[peerId].conn);
+
+        if (data === "time to die") {
+            this.handleDying(this.clientPeers[peerId]);
         }
         else if (!isNaN(Number(data))) {
             // window.logToTerminal(`Received number: ${num}`);
-            this.clientPeers[peerId].conn.send(Database.get(Number(data)));
+            this.clientPeers[peerId].send(Database.get(Number(data)));
         }
         else {
             const parsed = validateJSON<Message>(data, MessageExample);
@@ -181,7 +174,7 @@ export class MyConnections {
                 Database.store(parsed.data!);
                 const latest = Database.getLatest();
                 for (const cli in this.clientPeers) {
-                    this.clientPeers[cli].conn.send(latest);
+                    this.clientPeers[cli].send(latest);
                 }
             }
             else {
@@ -190,7 +183,7 @@ export class MyConnections {
         }
     }
 
-    static handleClientDisconnect(err: string | null, conn: PeerJs.DataConnection) {
+    static handleClientDisconnect(err: any | null, conn: PeerJs.DataConnection) {
         if (err) {
             window.logToTerminal(`CLIENT ERROR: ${err}`);
             window.logToTerminal(`Disconnected: ${conn.peer}`);
@@ -198,7 +191,7 @@ export class MyConnections {
         else {
             window.logToTerminal(`Disconnected: ${conn.peer}`);
         }
-        this.clientPeers[conn.peer].conn.close();
+        this.clientPeers[conn.peer].close();
         delete this.clientPeers[conn.peer];
     }
 
@@ -273,6 +266,6 @@ export class MyConnections {
     // SEND DATA TO CLIENT NODES ====================
 
     static send(peerid: string, message: string) {
-        this.clientPeers[peerid].conn.send(message);
+        this.clientPeers[peerid].send(message);
     }
 }

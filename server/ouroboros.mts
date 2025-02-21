@@ -1,20 +1,7 @@
 import path from 'path';
 import puppeteer from 'puppeteer';
 
-// import { validateJSON } from '../src/validator.mts';
-// import { type Message, MessageExample } from '../src/types.mts';
 
-// import {MyConnections} from "../src/main.ts";
-
-// declare global {
-//     interface Window {
-//         MyConnections: typeof MyConnections;
-//     }
-// }
-// FOR TS
-class MyConnections {
-    static init() { };
-}
 
 const main = async () => {
 
@@ -92,9 +79,7 @@ const main = async () => {
     }
 
     try {
-        await page.evaluate(() => {
-            MyConnections.init();
-        });
+        await page.evaluate(`MyConnections.init();`);
     } catch (error) {
         console.log(error);
     }

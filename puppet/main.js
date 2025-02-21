@@ -1,6 +1,7 @@
 import { Database } from "./database.js";
 import { MessageExample } from './types.mjs';
 import { validateJSON } from './validator.mjs';
+import { Peer } from 'peerjs';
 export class MyConnections {
     // MAKE SURE NOTHING IS EVALUATED ON LOAD, SINCE THIS CLASS IS USED IN ./server FOR TYPE CHECKING
     static serverPeer;
@@ -78,7 +79,7 @@ export class MyConnections {
     }
     static handleServerError(err) {
         // if (`${err}`.includes("ouroboros-node")) return;
-        if (`${err}`.includes("Lost connection to server")) {
+        if (err.type === "network") {
             this.serverPeer.reconnect();
         }
         // if (!`${err}`.includes("is taken")) {
@@ -91,7 +92,7 @@ export class MyConnections {
     }
     static cleanup() {
         for (const peerId in this.clientPeers) {
-            this.clientPeers[peerId].conn.close();
+            this.clientPeers[peerId].close();
             delete this.clientPeers[peerId];
         }
         if (this.dyingNodeConn) {
@@ -108,19 +109,16 @@ export class MyConnections {
     }
     static handleOpen(conn) {
         window.logToTerminal(`User connected: ${conn.peer}`);
-        this.clientPeers[conn.peer] = { conn, isAlive: true };
+        this.clientPeers[conn.peer] = conn;
         conn.on('data', (data) => this.handleData(conn.peer, data));
     }
     static handleData(peerId, data) {
-        if (data === "pong") {
-            this.clientPeers[peerId].isAlive = true;
-        }
-        else if (data === "time to die") {
-            this.handleDying(this.clientPeers[peerId].conn);
+        if (data === "time to die") {
+            this.handleDying(this.clientPeers[peerId]);
         }
         else if (!isNaN(Number(data))) {
             // window.logToTerminal(`Received number: ${num}`);
-            this.clientPeers[peerId].conn.send(Database.get(Number(data)));
+            this.clientPeers[peerId].send(Database.get(Number(data)));
         }
         else {
             const parsed = validateJSON(data, MessageExample);
@@ -128,7 +126,7 @@ export class MyConnections {
                 Database.store(parsed.data);
                 const latest = Database.getLatest();
                 for (const cli in this.clientPeers) {
-                    this.clientPeers[cli].conn.send(latest);
+                    this.clientPeers[cli].send(latest);
                 }
             }
             else {
@@ -144,7 +142,7 @@ export class MyConnections {
         else {
             window.logToTerminal(`Disconnected: ${conn.peer}`);
         }
-        this.clientPeers[conn.peer].conn.close();
+        this.clientPeers[conn.peer].close();
         delete this.clientPeers[conn.peer];
     }
     // HANDLE CONNECTION TO THE OLD SERVER ====================
@@ -169,12 +167,11 @@ export class MyConnections {
         const nodeKeys = Object.keys(nodes).map(Number);
         const newNodeKey = Number(Math.max(...nodeKeys));
         const newNode = nodes[newNodeKey];
-        window.logToTerminal(`New Node: ${newNode}`);
         if (newNode !== conn.peer) {
             window.logToTerminal("FAKE CALL! I'M NOT DYING!");
             return;
         }
-        window.logToTerminal("I'M DYING! SENDING ALL DATA TO THE NEW SERVER!");
+        await window.logToTerminal("I'M DYING! SENDING ALL DATA TO THE NEW SERVER!");
         // window.logToTerminal("DISCONNECTING ALL USERS!");
         // for (const cli in this.clientPeers) {
         //     // this.clientPeers[cli].conn.send("switch-node");
@@ -183,7 +180,7 @@ export class MyConnections {
         // }
         conn.send(JSON.stringify(Database.messages));
         this.serverPeer.destroy();
-        window.logToTerminal("DATA SENT! SHUTTING DOWN!");
+        await window.logToTerminal("DATA SENT! SHUTTING DOWN!");
         window.killmyself();
     }
     // HEART BEAT ==================== idk if this is needed
@@ -203,6 +200,6 @@ export class MyConnections {
     // }
     // SEND DATA TO CLIENT NODES ====================
     static send(peerid, message) {
-        this.clientPeers[peerid].conn.send(message);
+        this.clientPeers[peerid].send(message);
     }
 }

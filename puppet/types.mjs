@@ -3,3 +3,4 @@ export const MessageExample = {
     message: "",
     // date: 0
 };
+// export type Peer = import('peerjs').Peer;
