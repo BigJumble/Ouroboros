@@ -159,8 +159,8 @@ export class MyConnections {
         this.serverPeer.destroy();
         this.clientPeers = {};
         setTimeout(() => {
-            this.init(this.currentNodeID);
-        }, 5000);
+            this.init();
+        }, 60000);
     }
 
     // HANDLE CLIENT CONNECTIONS ====================

@@ -115,7 +115,7 @@ const main = async () => {
         } catch (error) {
             console.log(`Error: ${error}`);
         }
-    }, 5 * 60 * 60 * 1000); // 5 hours
+    }, 2 * 60 * 60 * 1000); // 2 hours, since at ~2.5h without connection there is webrtc error
 
     process.on('SIGINT', () => {
         clearInterval(interval);
