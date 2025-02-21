@@ -134,7 +134,7 @@ export class MyConnections {
     }
 
     static async handleServerError(message: string, type: PeerErrorType, cause:unknown, name:string) {
-        await window.logToTerminal(`ERROR HANDLER:\nMSG: ${message}\nTYPE: ${type}\n CAUSE:${cause}\nNAME:${name}`);
+        await window.logToTerminal(`ERROR HANDLER:\nMSG: ${message}\nTYPE: ${type}\nCAUSE: ${cause}\nNAME: ${name}`);
 
         if(type === "peer-unavailable") return; // when connecting to an old server
 

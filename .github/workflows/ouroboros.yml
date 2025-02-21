@@ -1,7 +1,7 @@
 name: Run Ouroboros server
 on:
-  push:
-    branches: [ main ]
+#   push:
+#     branches: [ main ]
   workflow_dispatch:
   repository_dispatch:
     types: [trigger_node]
