@@ -75,7 +75,7 @@ export class MyConnections {
         }
 
         this.serverPeer.on('open', (id) => this.handleServerOpen(id));
-        this.serverPeer.on("error", (err) => this.handleServerError(err.message, err.type));    
+        this.serverPeer.on("error", (err) => this.handleServerError(err.message, err.type, err.cause, err.name));    
     }
 
 
@@ -132,9 +132,8 @@ export class MyConnections {
         this.serverPeer.reconnect();
     }
 
-    static async handleServerError(message: string, type: PeerErrorType) {
-        await window.logToTerminal(`SERVER PEER ${message}`);
-        await window.logToTerminal(`ERROR TYPE: ${type}`);
+    static async handleServerError(message: string, type: PeerErrorType, cause:unknown, name:string) {
+        await window.logToTerminal(`ERROR HANDLER:\nMSG: ${message}\nTYPE: ${type}\n CAUSE:${cause}\nNAME:${name}`);
 
         if(type === "peer-unavailable") return; // when connecting to an old server
 
